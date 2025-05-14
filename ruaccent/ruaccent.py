@@ -231,7 +231,7 @@ class RUAccent:
         return " ".join(outputs)
     
 
-    def process_all_internal(self, text):
+    def process_all_internal(self, text, only_yo=False): # add only_yo
         text = re.sub(self.normalize, "", text)
         sentences = TextPreprocessor.split_by_sentences(text)
         outputs = []
@@ -242,15 +242,17 @@ class RUAccent:
                 continue
             stress_usages = self.extract_entities(self.stress_usage_predictor.predict_stress_usage(sentence)) if not self.tiny_mode else ["STRESS"] * len(text)            
             processed_words = self._process_yo(words, sentence)
-            processed_words = self._process_omographs(processed_words)
-            processed_words = self._process_accent(processed_words, stress_usages)
+            # add if block for only_yo
+            if not only_yo:
+                processed_words = self._process_omographs(processed_words)
+                processed_words = self._process_accent(processed_words, stress_usages)
             processed_sentence = "".join([l+r for l,r in zip(remaining_text, processed_words)] + [remaining_text[-1]])
             processed_sentence = self.delete_spaces_before_punc(processed_sentence)
             
             outputs.append(processed_sentence)
         return "".join(outputs)
 
-    def process_all(self, text, skip_regex=None):
+    def process_all(self, text, skip_regex=None, only_yo=False): # add only_yo
         if skip_regex:
             pattern = re.compile(skip_regex)
             matches = pattern.finditer(text)
@@ -281,6 +283,6 @@ class RUAccent:
                 results.append(self.process_all_internal(e))
             return "".join([results[0]] + [l+r for l,r in zip(skipped, results[1:])])
         else:
-            return self.process_all_internal(text)
+            return self.process_all_internal(text, only_yo=only_yo) # add only_yo
 
 
